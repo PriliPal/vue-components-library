@@ -1,30 +1,6 @@
 <template>
   <div>
 
-<!--    <h2>Анимированный коллапс</h2>-->
-
-<!--    <h3>Возможные атрибуты компонента AnimatedCollapse</h3>-->
-
-<!--    <p>-->
-<!--      Если вы используете AC для вывода какого-то массива, то в атрибуте <code>:array-length</code> укажите целым числом длинну массива по которому итерируетесь.-->
-<!--      В противном случае этот атрибут можно не указывать.-->
-<!--    </p>-->
-
-<!--    <p>-->
-<!--      Атрибут <code>:title</code> является обязательным и отвечает за строку которая будет видна даже когда AC закрыт.-->
-<!--    </p>-->
-
-<!--    <p>-->
-<!--      Атрибут <code>:collapse-default-opened</code> является необязательным и отвечает за изначальное состояние AC, соответственно по умолчанию при true он будет открыт при false закрыт.-->
-<!--    </p>-->
-
-<!--    <p>-->
-<!--      Атрибут <code>:open-by</code> является необязательным и отвечает исключительно за визуальную часть. Возможные значения ['button', 'title', 'all']-->
-<!--    </p>-->
-<!--    <p></p>-->
-<!--    <p></p>-->
-
-
     <div class="content">
 
       <animated-collapse
@@ -46,26 +22,6 @@
           {{item.body}}
         </div>
       </animated-collapse>
-
-<!--      <animated-collapse-->
-<!--          :array-length="arrayOfObjects.length"-->
-<!--          :title="'Collapse 2 title'"-->
-<!--          :collapse-default-opened="true"-->
-<!--          :open-by="'button'"-->
-<!--          :element-size="'auto'"-->
-<!--          :collapse-id="1"-->
-<!--          :speed="500"-->
-<!--      >-->
-<!--        <div-->
-<!--            class="collapse-item unselectable cursor-pointer"-->
-<!--            v-for="(item, index) of arrayOfObjects"-->
-<!--            :key="'collapseId'+'1'+'collapseItem'+index"-->
-<!--            :id="'collapseId'+'1'+'collapseItem'+index"-->
-<!--        >-->
-<!--          <span>{{index+1}}. </span>-->
-<!--          {{item.body}}-->
-<!--        </div>-->
-<!--      </animated-collapse>-->
 
     </div>
 
