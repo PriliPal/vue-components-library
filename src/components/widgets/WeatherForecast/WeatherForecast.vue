@@ -1,20 +1,19 @@
 <template>
 
-  <div class="weather" @click="openWeatherChoice" :ref="'weather'">
+  <div class="weather" @click="openWeatherChoice" ref="weather">
 
-    <div class="weather-background" id="weather-background"></div>
+    <div class="weather-background" ref="weatherBackground"></div>
 
-    <div v-if="cityChoiceOpened" class="cities-choice-background">
+    <div v-if="cityChoiceOpened" :class="cityChoiceOpened ? 'cities-choice-background' : ''">
 
       <div class="cities-choice">
         <div
             v-for="city in availableCities"
             class="city text-nowrap"
-            :class="currentCity === city ? 'current-city' : ''"
             :key="city"
             @click="changeCurrentCity(city)"
         >
-          {{city}}
+          {{ city }}
         </div>
       </div>
 
@@ -23,30 +22,33 @@
     <div class="all-info" :class="cityChoiceOpened ? 'invisible':''">
 
       <div class="city-and-description">
-        {{weather.city}} - {{weather.weather}}
+        {{ weather.city }} - {{ weather.weather }}
       </div>
 
       <div class="temp">
-        {{weather.temp}} °C
+        {{ weather.temp }} °C
       </div>
 
       <div class="other-info">
 
         <div class="temp-feel">
-          Ощущается <span class="text-nowrap">как {{weather.feelsLikeTemp}} °C</span>
+          Ощущается <span class="text-nowrap">как {{ weather.feelsLikeTemp }} °C</span>
         </div>
 
         <div class="wind-speed">
-          Скорость <span class="text-nowrap">ветра {{weather.windSpeed}} м/с</span>
+          Скорость <span class="text-nowrap">ветра {{ weather.windSpeed }} м/с</span>
         </div>
 
         <div class="visibility">
+
           Видимость
-          <span v-if="weather.visibility === ''"></span>
-          <span v-else-if="weather.visibility >= 9000">Отличная</span>
-          <span v-else-if="weather.visibility >= 7000">Хорошая</span>
-          <span v-else-if="weather.visibility >= 4000">Средняя</span>
-          <span v-else>Плохая</span>
+
+          <span :key="visibility.value" v-for="(visibility) in visibilityMap">
+            <span v-if="weather.visibility >= visibility.from && weather.visibility <= visibility.to">
+              {{ visibility.value }}
+            </span>
+          </span>
+
         </div>
 
       </div>
@@ -58,6 +60,8 @@
 </template>
 
 <script>
+import config from './config.js'
+
 export default {
   name: "WeatherForecast",
 
@@ -65,22 +69,25 @@ export default {
     return {
       receivedWeather: {},
       weather: {
-        city: 'Пушкин',
+        city: '',
         weather: '',
 
         temp: 0,
         feelsLikeTemp: 0,
 
         visibility: '',
-        windSpeed: '',
+        windSpeed: 0,
       },
       cityChoiceOpened: false,
       background: '',
-      currentCity: 'Пушкин',
-      availableCities: ['Пушкин', 'Санкт-Петербург', 'Москва', 'Новосибирск', 'Казань', 'Уфа', 'Ульяновск', 'Белгород', 'Чебоксары', 'Волгоград'],
-      url: 'https://api.openweathermap.org/data/2.5/weather',
-      openWeatherKey: '124f67024ef2006f181b69568e3cdb6c',
-      lang: 'ru'
+      currentTime: '',
+      currentCity: config.cities.default,
+      availableCities: config.cities.all,
+      url: config.apiUrl,
+      openWeatherKey: config.appid,
+      lang: config.languages.default,
+      languages: config.languages,
+      visibilityMap: config.visibility
     }
   },
 
@@ -88,29 +95,71 @@ export default {
     this.getWeather()
     // setInterval(() => {
     //   this.getWeather()
-    // }, 30000)
+    // },  30000)
   },
 
   methods: {
 
+    changeLang(language) {
+      this.lang = language
+
+      this.getWeather()
+    },
+
+    findOutCurrentTime() {
+      const now = new Date().getHours()
+      if (now >= 6 || now <= 21) {
+        this.currentTime = 'night'
+      } else {
+        this.currentTime = 'day'
+      }
+    },
+
     getWeather() {
       fetch(`${this.url}?q=${this.currentCity}&lang=${this.lang}&appid=${this.openWeatherKey}`)
-        .then(response => response.json())
-        .then(data => {
-          this.receivedWeather = data
+          .then(response => {
 
-          this.weather.city = this.receivedWeather.name
-          this.weather.weather = this.receivedWeather.weather[0].description
-          this.weather.temp =  Math.round((this.receivedWeather.main.temp - 273.15) * 10)/10
-          this.weather.feelsLikeTemp = Math.round((this.receivedWeather.main.feels_like - 273.15) * 10)/10
-          this.weather.visibility = this.receivedWeather.visibility
-          this.weather.windSpeed = this.receivedWeather.wind.speed
-          this.receivedWeather = {}
-          this.changeBackground(this.weather.weather)
-        })
-        .catch(e => {
-          console.log(e)
-        })
+            if (response.status === 404) {
+              throw new Error('Неверно указан город')
+            }
+
+            if (response.status === 401) {
+              throw new Error('Неверно указан appid или такого appid не существует')
+            }
+
+            return response.json()
+
+          })
+          .then(data => {
+
+            this.weather = this.mapWeather(data)
+
+            this.findOutCurrentTime()
+
+            this.changeBackground(this.weather.weather)
+
+          })
+          .catch(error => {
+            console.log(error)
+          })
+    },
+
+    convertKelvinToCelsius(temp) {
+      return Math.round((temp - 273.15) * 10) / 10
+    },
+
+    mapWeather(data) {
+
+      let weather = {}
+
+      weather.city = data.name
+      weather.weather = data.weather[0].description
+      weather.temp = this.convertKelvinToCelsius(data.main.temp)
+      weather.feelsLikeTemp = this.convertKelvinToCelsius(data.main.feels_like)
+      weather.visibility = data.visibility
+      weather.windSpeed = data.wind.speed
+
+      return weather;
     },
 
     changeCurrentCity(city) {
@@ -120,32 +169,23 @@ export default {
 
     changeBackground(weather) {
 
-      if (this.background) {
-        document.getElementById('weather-background').classList.remove(this.background)
+      if (this.$refs.weatherBackground.classList.length > 1) {
+        this.$refs.weatherBackground.classList.remove(this.$refs.weatherBackground.classList[1])
       }
 
-      if (weather === 'пасмурно') {
-        this.background = 'mainly_cloudy'
-        document.getElementById('weather-background').classList.add('mainly_cloudy')
-      } else if (weather === 'облачно' || weather === 'небольшая облачность' || weather === 'переменная облачность' || weather === 'облачно с прояснениями') {
-        this.background = 'partly_cloudy'
-        document.getElementById('weather-background').classList.add('partly_cloudy')
-      } else if (weather === 'ясно') {
-        this.background = 'clear'
-        document.getElementById('weather-background').classList.add('clear')
-      } else if (weather === 'дождь' || weather === 'небольшой дождь' || weather === 'небольшой проливной дождь' || weather === 'гроза с сильным дождём') {
-        this.background = 'rain'
-        document.getElementById('weather-background').classList.add('rain')
+      for (let backgroundKey in config.background) {
+        if (config.background[backgroundKey].includes(weather)) {
+          this.$refs.weatherBackground.classList.add(`${backgroundKey}_${this.currentTime}`)
+        }
       }
-
     },
 
     openWeatherChoice() {
       if (this.cityChoiceOpened) {
-        document.getElementById('weather-background').classList.remove('blur')
+        this.$refs.weatherBackground.classList.remove('blur')
         this.$refs.weather.style.cursor = 'default;'
       } else {
-        document.getElementById('weather-background').classList.add('blur')
+        this.$refs.weatherBackground.classList.add('blur')
       }
       this.cityChoiceOpened = !this.cityChoiceOpened
     }
@@ -177,7 +217,7 @@ export default {
   width: calc(100% + 20px);
   height: calc(100% + 20px);
   z-index: -1;
-  transition: all linear 0.3s;
+  transition: all linear 0.2s;
 }
 
 .blur {
@@ -190,21 +230,38 @@ export default {
 }
 
 /*облачно, небольшая облачность, переменная облачность, облачно с прояснениями*/
-.partly_cloudy {
+.partly_cloudy_day {
   background-image: url(../../../assets/images/partly_cloudy.jpg);
 }
+.partly_cloudy_night {
+  background-image: url(../../../assets/images/partly_cloudy.jpg);
+}
+
 /*пасмурно*/
-.mainly_cloudy {
+.mainly_cloudy_day {
   background-image: url(../../../assets/images/mainly_cloudy.jpg);
 }
+.mainly_cloudy_night {
+  background-image: url(../../../assets/images/mainly_cloudy.jpg);
+}
+
 /*ясно*/
-.clear {
+.clear_day {
   background-image: url(../../../assets/gif/clear_day.gif);
 }
+.clear_night {
+  background-image: url(../../../assets/gif/clear_day.gif);
+}
+
 /*небольшой дождь, дождь, небольшой проливной дождь, гроза с сильным дождём*/
-.rain {
+.rain_day {
   background-image: url(../../../assets/images/rain.jpg);
 }
+.rain_night {
+  background-image: url(../../../assets/images/rain.jpg);
+}
+
+
 
 .all-info {
   z-index: 1;
@@ -257,6 +314,7 @@ export default {
   left: 0;
   top: 0;
   display: flex;
+  transition: all linear 1s;
 }
 
 .city {
