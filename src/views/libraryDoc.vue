@@ -27,11 +27,11 @@
 
     <div class="content">
       <div v-for="index in 3" class="radio" :key="`radio${index}`" @click="changeCheckedIndexRadio(index)">
-        <radio-button :checked="checkedIndexRadio === index">Я тут радиокнопка а ты никто</radio-button>
+        <radio-button :checked="checkedIndexRadio === index">I am radiobutton</radio-button>
       </div>
 
       <div v-for="index in 3" class="checkbox" :key="`checkbox${index}`" @click="changeCheckedIndexCheckbox(index)">
-        <check-box  :checked="checkedIndexCheckbox.includes(index)">Я тут чекбокс а ты никто</check-box>
+        <check-box  :checked="checkedIndexCheckbox.includes(index)">I am checkbox</check-box>
       </div>
     </div>
 
@@ -39,7 +39,7 @@
     <div class="content">
 
       <custom-search
-          :placeholder="'Искать'"
+          :placeholder="'Search'"
           :max-width="'400px'"
           @updateSearchInputValue="updateSearchInputValue"
           @startSearch="startSearch"
@@ -58,15 +58,11 @@
 
     </div>
 
-
-
-
-
   </div>
 </template>
 
 <script>
-import AnimatedCollapse from "@/components/AnimatedCollapse/AnimatedCollapse.vue";
+import AnimatedCollapse from "@/components/widgets/AnimatedCollapse/AnimatedCollapse.vue";
 import RadioButton from "@/components/customButtons/radio/RadioButton.vue";
 import CheckBox from "@/components/customButtons/checkbox/CheckBox";
 import CustomSearch from "@/components/CustomSearch/CustomSearch";
@@ -125,7 +121,7 @@ export default {
 
     startSearch(value) {
       this.searchValue = value
-    }
+    },
   }
 }
 </script>
